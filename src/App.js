@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 const PlannrDashboard = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -10,11 +10,11 @@ const PlannrDashboard = () => {
 
   // OAuth2 Configuration
   const OAUTH_CONFIG = {
-    clientId: '9fda3bc7-4b43-43d2-91cb-aea9cd6edd37', // My client ID
+    clientId: '9fda3bc7-4b43-43d2-91cb-aea9cd6edd37',
     redirectUri: 'https://red-glacier-0d6485a03.1.azurestaticapps.net/auth/callback',
     authUrl: 'https://api.plannrcrm.com/oauth/authorize',
     scope: '*',
-    azureFunctionUrl: 'https://mkfa-plannr-v1-czadhde2bccrb4a7.uksouth-01.azurewebsites.net' // Your existing Azure Function
+    azureFunctionUrl: 'https://mkfa-plannr-v1-czadhde2bccrb4a7.uksouth-01.azurewebsites.net'
   };
 
   // Generate random state for OAuth security
@@ -22,31 +22,7 @@ const PlannrDashboard = () => {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
   };
 
- // Check authentication status on component mount
-useEffect(() => {
-  checkAuthStatus();
-}, [checkAuthStatus]);
-
-// Handle OAuth callback when component mounts
-useEffect(() => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const code = urlParams.get('code');
-  const state = urlParams.get('state');
-  const error = urlParams.get('error');
-  
-  if (error) {
-    setAuthError(`OAuth Error: ${error}`);
-    setIsLoading(false);
-    window.history.replaceState({}, document.title, window.location.pathname);
-    return;
-  }
-
-  if (code && state) {
-    handleOAuthCallback(code, state);
-  }
-}, [handleOAuthCallback]);
-
-  const checkAuthStatus = () => {
+  const checkAuthStatus = useCallback(() => {
     setIsLoading(true);
     try {
       const storedUser = localStorage.getItem('plannr_oauth_user');
@@ -74,28 +50,9 @@ useEffect(() => {
       clearAuthData();
     }
     setIsLoading(false);
-  };
+  }, []);
 
-  const handleOAuthLogin = () => {
-    setAuthError('');
-    
-    // Generate and store state for security
-    const state = generateState();
-    localStorage.setItem('oauth_state', state);
-    
-    // Build OAuth URL
-    const authUrl = new URL(OAUTH_CONFIG.authUrl);
-    authUrl.searchParams.append('response_type', 'code');
-    authUrl.searchParams.append('client_id', OAUTH_CONFIG.clientId);
-    authUrl.searchParams.append('scope', OAUTH_CONFIG.scope);
-    authUrl.searchParams.append('redirect_uri', OAUTH_CONFIG.redirectUri);
-    authUrl.searchParams.append('state', state);
-    
-    // Redirect to PlannrCRM OAuth
-    window.location.href = authUrl.toString();
-  };
-
-  const handleOAuthCallback = async (code, state) => {
+  const handleOAuthCallback = useCallback(async (code, state) => {
     setIsLoading(true);
     setAuthError('');
     
@@ -155,7 +112,7 @@ useEffect(() => {
     }
     
     setIsLoading(false);
-  };
+  }, [OAUTH_CONFIG.azureFunctionUrl, OAUTH_CONFIG.redirectUri]);
 
   const fetchUserInfo = async (accessToken) => {
     try {
@@ -257,6 +214,25 @@ useEffect(() => {
     setTestResult('');
   };
 
+  const handleOAuthLogin = () => {
+    setAuthError('');
+    
+    // Generate and store state for security
+    const state = generateState();
+    localStorage.setItem('oauth_state', state);
+    
+    // Build OAuth URL
+    const authUrl = new URL(OAUTH_CONFIG.authUrl);
+    authUrl.searchParams.append('response_type', 'code');
+    authUrl.searchParams.append('client_id', OAUTH_CONFIG.clientId);
+    authUrl.searchParams.append('scope', OAUTH_CONFIG.scope);
+    authUrl.searchParams.append('redirect_uri', OAUTH_CONFIG.redirectUri);
+    authUrl.searchParams.append('state', state);
+    
+    // Redirect to PlannrCRM OAuth
+    window.location.href = authUrl.toString();
+  };
+
   const handleLogout = () => {
     clearAuthData();
     setShowSettings(false);
@@ -265,6 +241,31 @@ useEffect(() => {
   const openFactFindGenerator = () => {
     window.open('/factfind-generator', '_blank');
   };
+
+  // Check authentication status on component mount
+  useEffect(() => {
+    checkAuthStatus();
+  }, [checkAuthStatus]);
+
+  // Handle OAuth callback when component mounts
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
+    const error = urlParams.get('error');
+
+    if (error) {
+      setAuthError(`OAuth Error: ${error}`);
+      setIsLoading(false);
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return;
+    }
+
+    if (code && state) {
+      handleOAuthCallback(code, state);
+    }
+  }, [handleOAuthCallback]);
 
   // App grid - 32 total slots for development
   const gridApps = [
