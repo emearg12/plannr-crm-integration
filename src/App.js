@@ -22,30 +22,29 @@ const PlannrDashboard = () => {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
   };
 
-  // Check authentication status on component mount
-  useEffect(() => {
-    checkAuthStatus();
-  }, []);
+ // Check authentication status on component mount
+useEffect(() => {
+  checkAuthStatus();
+}, [checkAuthStatus]);
 
-  // Handle OAuth callback when component mounts
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const state = urlParams.get('state');
-    const error = urlParams.get('error');
+// Handle OAuth callback when component mounts
+useEffect(() => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const code = urlParams.get('code');
+  const state = urlParams.get('state');
+  const error = urlParams.get('error');
+  
+  if (error) {
+    setAuthError(`OAuth Error: ${error}`);
+    setIsLoading(false);
+    window.history.replaceState({}, document.title, window.location.pathname);
+    return;
+  }
 
-    if (error) {
-      setAuthError(`OAuth Error: ${error}`);
-      setIsLoading(false);
-      // Clean URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-      return;
-    }
-
-    if (code && state) {
-      handleOAuthCallback(code, state);
-    }
-  }, []);
+  if (code && state) {
+    handleOAuthCallback(code, state);
+  }
+}, [handleOAuthCallback]);
 
   const checkAuthStatus = () => {
     setIsLoading(true);
