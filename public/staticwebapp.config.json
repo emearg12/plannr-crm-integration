@@ -1,1 +1,11 @@
-
+{
+  "navigationFallback": {
+    "rewrite": "/index.html"
+  },
+  "routes": [
+    {
+      "route": "/auth/callback",
+      "rewrite": "/index.html"
+    }
+  ]
+}
