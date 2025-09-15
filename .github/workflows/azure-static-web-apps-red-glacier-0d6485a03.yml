@@ -23,22 +23,10 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: false
           lfs: false
-
-      - name: Install OIDC Client from Core Package
-        run: npm install @actions/core@1.6.0 @actions/http-client
-
-      - name: Get Id Token
-        id: idtoken
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const core = require('@actions/core');
-            return await core.getIDToken();
-          result-encoding: string
 
       - name: Build And Deploy
         id: builddeploy
@@ -46,12 +34,9 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_RED_GLACIER_0D6485A03 }}
           action: "upload"
-          # App (React) and API (managed Functions) locations:
-          app_location: "/"
-          api_location: "api"
-          output_location: "build"
-          # Pass OIDC token (optional; you already generate it)
-          github_id_token: ${{ steps.idtoken.outputs.result }}
+          app_location: "/"        # React app path
+          api_location: "api"      # <-- managed Functions folder at repo root
+          output_location: "build" # CRA build output
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
@@ -63,4 +48,5 @@ jobs:
         uses: Azure/static-web-apps-deploy@v1
         with:
           action: "close"
+
 
