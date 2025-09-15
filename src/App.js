@@ -380,7 +380,7 @@ function App() {
             {authError && (
               <div style={{
                 backgroundColor: '#fef2f2',
-                border: '1px solid '#fecaca',
+                border: '1px solid #fecaca',
                 color: '#dc2626',
                 padding: '12px 16px',
                 borderRadius: '12px',
